@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_esp/flutter_esp.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 void main() {
   runApp(const MyApp());
@@ -19,22 +20,24 @@ class _MyAppState extends State<MyApp> {
   String _platformVersion = 'Unknown';
   final _flutterEspPlugin = FlutterEsp();
 
-  @override
-  void initState() {
-    super.initState();
-    initPlatformState();
-  }
-
   // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
+  Future<void> scan() async {
+    // Request location permission
+    await Permission.locationWhenInUse.request();
+    // Request bluetooth permission
+    await Permission.bluetooth.request();
+    await Permission.bluetoothConnect.request();
+    await Permission.bluetoothScan.request();
+
     String platformVersion;
     // Platform messages may fail, so we use a try/catch PlatformException.
     // We also handle the message potentially returning null.
     try {
+      platformVersion = await _flutterEspPlugin.getPlatformVersion() ??
+          'Unknown platform version';
+    } on PlatformException catch (e) {
       platformVersion =
-          await _flutterEspPlugin.getPlatformVersion() ?? 'Unknown platform version';
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
+          'Failed to get platform version: ${e.code} | ${e.message}';
     }
 
     // If the widget was removed from the tree while the asynchronous platform
@@ -56,6 +59,10 @@ class _MyAppState extends State<MyApp> {
         ),
         body: Center(
           child: Text('Running on: $_platformVersion\n'),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: scan,
+          child: const Icon(Icons.bluetooth_searching),
         ),
       ),
     );
