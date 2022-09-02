@@ -3,7 +3,7 @@ import UIKit
 import ESPProvision
 
 public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
-    var bleDevices:[ESPDevice]?
+    var bleDevices: [String: ESPDevice]?
     
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "flutter_esp", binaryMessenger: registrar.messenger())
@@ -34,7 +34,8 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
         ESPProvisionManager.shared.searchESPDevices(devicePrefix: prefix, transport: .ble, security: secure ? .secure : .unsecure) {
             deviceList, error in
             DispatchQueue.main.async {
-                result(deviceList?.map {$0.name})
+                self.bleDevices = deviceList?.reduce(into: [String: ESPDevice]()) {$0[String(describing: $1)] = $1}
+                result(deviceList?.map {["name": $0.name, "id": String(describing: $0)]})
             }
         }
     }

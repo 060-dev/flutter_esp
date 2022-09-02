@@ -42,6 +42,7 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
     private BluetoothAdapter bleAdapter;
     private boolean isScanning = false;
     private ESPProvisionManager provisionManager;
+    private final HashMap<String, BluetoothDevice> devicesMap = new HashMap<>();
 
     private static final String TAG = FlutterEspPlugin.class.getSimpleName();
 
@@ -51,6 +52,7 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
     private static final String LOCATION_PERMISSION_NOT_GRANTED = "LOCATION_PERMISSION_NOT_GRANTED";
     private static final String BT_CONNECT_PERMISSION_NOT_GRANTED = "BT_CONNECT_PERMISSION_NOT_GRANTED";
     private static final String BAD_ARGUMENTS = "BAD_ARGUMENTS";
+    private static final String DEVICE_NOT_FOUND = "DEVICE_NOT_FOUND";
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
@@ -62,17 +64,30 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-        if (call.method.equals("searchBluetoothDevices")) {
-            SearchArguments args;
-            try {
-                args = SearchArguments.fromMap(call.arguments);
-            } catch (Exception e) {
-                result.error(BAD_ARGUMENTS, e.getMessage(), null);
-                return;
-            }
-            btSearch(result, args.prefix);
-        } else {
-            result.notImplemented();
+        switch (call.method) {
+            case "searchBluetoothDevices":
+                SearchArguments searchArguments;
+                try {
+                    searchArguments = SearchArguments.fromMap(call.arguments);
+                } catch (Exception e) {
+                    result.error(BAD_ARGUMENTS, e.getMessage(), null);
+                    return;
+                }
+                btSearch(result, searchArguments.prefix);
+                break;
+            case "connectBluetoothDevice":
+                ConnectArguments connectArguments;
+                try {
+                    connectArguments = ConnectArguments.fromMap(call.arguments);
+                } catch (Exception e) {
+                    result.error(BAD_ARGUMENTS, e.getMessage(), null);
+                    return;
+                }
+                btConnect(result, connectArguments.deviceId);
+                break;
+            default:
+                result.notImplemented();
+                break;
         }
     }
 
@@ -133,16 +148,24 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
         }
     }
 
+    private void btConnect(Result result, String id) {
+        Log.d(TAG, "btConnect: "+id);
+        final BluetoothDevice device = this.devicesMap.get(id);
+        if(device != null){
+            result.success(device.toString());
+        }else{
+            result.error(DEVICE_NOT_FOUND, null,null);
+        }
+    }
+
     private class ScanListener implements BleScanListener {
         private final Result result;
-        private final ArrayList<String> nameList;
-        private final HashMap<BluetoothDevice, String> bluetoothDevices;
+        private final ArrayList<HashMap<String,Object>> devicesList;
         private boolean submitted = false;
 
         ScanListener(Result result) {
             this.result = result;
-            bluetoothDevices = new HashMap<>();
-            nameList = new ArrayList<>();
+            devicesList = new ArrayList<>();
         }
 
         @Override
@@ -174,17 +197,17 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
             }
             Log.d(TAG, "Add service UUID : " + serviceUuid);
 
-            if (bluetoothDevices.containsKey(device)) {
+            if (devicesMap.containsKey(device.hashCode())) {
                 deviceExists = true;
             }
 
             if (!deviceExists) {
                 BleDevice bleDevice = new BleDevice();
                 bleDevice.setName(scanResult.getScanRecord().getDeviceName());
-                bleDevice.setBluetoothDevice(device);
+                bleDevice.setId(device.toString());
 
-                bluetoothDevices.put(device, serviceUuid);
-                nameList.add(bleDevice.getName());
+                devicesMap.put(device.toString(), device);
+                devicesList.add(bleDevice.toMap());
             }
         }
 
@@ -192,7 +215,7 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
         public void scanCompleted() {
             isScanning = false;
             if (!submitted) {
-                result.success(nameList);
+                result.success(devicesList);
                 submitted = true;
             }
         }
@@ -211,9 +234,9 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
 
     static class SearchArguments {
         String prefix;
-        boolean secure;
+        Boolean secure;
 
-        SearchArguments(String prefix, boolean secure) {
+        SearchArguments(String prefix, Boolean secure) {
             this.prefix = prefix;
             this.secure = secure;
         }
@@ -222,9 +245,23 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
         static SearchArguments fromMap(Object arguments) {
             Map<String, Object> map = (Map<String, Object>) arguments;
             String prefix = (String) map.get("prefix");
-            boolean secure = (boolean) map.get("secure");
+            Boolean secure = (Boolean) map.get("secure");
             return new SearchArguments(prefix, secure);
         }
 
+    }
+    static class ConnectArguments {
+        String deviceId;
+
+        ConnectArguments(String deviceId) {
+            this.deviceId = deviceId;
+        }
+
+        // Parse Object to ConnectArguments
+        static ConnectArguments fromMap(Object arguments) {
+            Map<String, Object> map = (Map<String, Object>) arguments;
+            String deviceId = (String) map.get("deviceId");
+            return new ConnectArguments(deviceId);
+        }
     }
 }

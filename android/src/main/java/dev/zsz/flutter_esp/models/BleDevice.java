@@ -1,10 +1,10 @@
 package dev.zsz.flutter_esp.models;
 
-import android.bluetooth.BluetoothDevice;
+import java.util.HashMap;
 
 public class BleDevice {
     private String name;
-    private BluetoothDevice bluetoothDevice;
+    private String id;
 
     public String getName() {
         return name;
@@ -14,11 +14,19 @@ public class BleDevice {
         this.name = name;
     }
 
-    public BluetoothDevice getBluetoothDevice() {
-        return bluetoothDevice;
+    public String getId() {
+        return id;
     }
 
-    public void setBluetoothDevice(BluetoothDevice bluetoothDevice) {
-        this.bluetoothDevice = bluetoothDevice;
+    public void setId(String hash) {
+        this.id = hash;
+    }
+
+    // Parse to HashMap
+    public HashMap<String, Object> toMap() {
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("name", name);
+        map.put("id", id);
+        return map;
     }
 }

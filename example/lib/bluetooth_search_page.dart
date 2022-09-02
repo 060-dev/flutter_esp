@@ -34,15 +34,15 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
   _ScanState state = _ScanState.loading();
 
   // Device name filter
-  final String _prefix = 'ESP_';
+  final String _prefix = 'PROV_';
 
   @override
   void initState() {
     super.initState();
-    scan();
+    _scan();
   }
 
-  Future<void> scan() async {
+  Future<void> _scan() async {
     // Request location permission
     await Permission.locationWhenInUse.request();
     // Request bluetooth permission
@@ -54,7 +54,7 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
       state = _ScanState.loading();
     });
 
-    List<String> devices = [];
+    List<SearchResult> devices = [];
     String? error;
     try {
       devices = await _flutterEspPlugin
@@ -78,6 +78,16 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
     });
   }
 
+  _connect(String id) {
+    setState(() {
+      state = _ScanState.loading();
+    });
+
+    _flutterEspPlugin.connectBluetoothDevice(ConnectArguments(
+      deviceId: id,
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -89,7 +99,7 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
             ),
             actions: [
               IconButton(
-                onPressed: state.loading ? null : scan,
+                onPressed: state.loading ? null : _scan,
                 icon: const Icon(Icons.refresh),
               )
             ],
@@ -99,7 +109,11 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
               mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: _DeviceList(state: state)),
+                Expanded(
+                    child: _DeviceList(
+                  state: state,
+                  onSelect: _connect,
+                )),
                 const Divider(),
                 Padding(
                   padding: _contentPadding,
@@ -133,9 +147,12 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
 }
 
 class _DeviceList extends StatelessWidget {
-  const _DeviceList({super.key, required this.state});
+  const _DeviceList({super.key, required this.state, required this.onSelect});
 
+  // Bluetooth search state
   final _ScanState state;
+  // Callback for when a device is selected
+  final void Function(String id) onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -166,11 +183,9 @@ class _DeviceList extends StatelessWidget {
         itemCount: state.devices.length,
         itemBuilder: (context, index) {
           return ListTile(
-            title: Text(state.devices[index]),
-            // title: Text(_devices[index].name),
-            // subtitle: Text(_devices[index].address),
-            // onTap: () =>
-            // _flutterEspPlugin.connect(_devices[index].address),
+            title: Text(state.devices[index].name),
+            subtitle: Text(state.devices[index].id),
+            onTap: () => onSelect(state.devices[index].id),
           );
         },
       );
@@ -181,7 +196,7 @@ class _DeviceList extends StatelessWidget {
 class _ScanState {
   final bool loading;
   final String? error;
-  final List<String> devices;
+  final List<SearchResult> devices;
 
   _ScanState(
       {required this.loading, required this.error, required this.devices});

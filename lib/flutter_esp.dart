@@ -1,7 +1,7 @@
 import 'flutter_esp_platform_interface.dart';
 
 class FlutterEsp {
-  Future<List<String>?> searchBluetoothDevices(
+  Future<List<SearchResult>?> searchBluetoothDevices(
       [SearchArguments args = const SearchArguments()]) async {
     return FlutterEspPlatform.instance.searchBluetoothDevices(args);
   }

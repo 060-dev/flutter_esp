@@ -1,4 +1,3 @@
-import 'package:flutter_esp/flutter_esp.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'flutter_esp_method_channel.dart';
@@ -24,7 +23,7 @@ abstract class FlutterEspPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<List<String>?> searchBluetoothDevices(SearchArguments args) {
+  Future<List<SearchResult>?> searchBluetoothDevices(SearchArguments args) {
     throw UnimplementedError(
         'searchBluetoothDevices() has not been implemented.');
   }
@@ -49,14 +48,28 @@ class SearchArguments {
   }
 }
 
-class ConnectArguments {
-  final String deviceName;
+class SearchResult {
+  final String name;
+  final String id;
 
-  const ConnectArguments({required this.deviceName});
+  const SearchResult({required this.name, required this.id});
+
+  factory SearchResult.fromMap(Map<Object?, Object?> map) {
+    return SearchResult(
+      name: map['name'] as String,
+      id: map['id'] as String,
+    );
+  }
+}
+
+class ConnectArguments {
+  final String deviceId;
+
+  const ConnectArguments({required this.deviceId});
 
   Map<String, dynamic> toMap() {
     return {
-      'deviceName': deviceName,
+      'deviceId': deviceId,
     };
   }
 }

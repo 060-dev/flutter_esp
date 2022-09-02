@@ -10,7 +10,8 @@ class MethodChannelFlutterEsp extends FlutterEspPlatform {
   final methodChannel = const MethodChannel('flutter_esp');
 
   @override
-  Future<List<String>?> searchBluetoothDevices(SearchArguments args) async {
+  Future<List<SearchResult>?> searchBluetoothDevices(
+      SearchArguments args) async {
     final objects = await methodChannel.invokeMethod<List<Object?>>(
       'searchBluetoothDevices',
       args.toMap(),
@@ -20,11 +21,15 @@ class MethodChannelFlutterEsp extends FlutterEspPlatform {
       return null;
     }
 
-    final List<String> result = [];
+    final List<SearchResult> result = [];
 
     for (final object in objects) {
-      if (object is String) {
-        result.add(object);
+      try {
+        result.add(SearchResult.fromMap(object as Map<Object?, Object?>));
+      } catch (e) {
+        if (kDebugMode) {
+          print(e);
+        }
       }
     }
 
@@ -33,9 +38,11 @@ class MethodChannelFlutterEsp extends FlutterEspPlatform {
 
   @override
   Future<void> connectBluetoothDevice(ConnectArguments args) async {
-    await methodChannel.invokeMethod<void>(
+    final result = await methodChannel.invokeMethod<void>(
       'connectBluetoothDevice',
       args.toMap(),
-    );
+    ) as String?;
+
+    print('connectBluetoothDevice result: $result');
   }
 }
