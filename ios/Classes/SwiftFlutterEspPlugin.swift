@@ -1,7 +1,10 @@
 import Flutter
 import UIKit
+import ESPProvision
 
 public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
+    var bleDevices:[ESPDevice]?
+    
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "flutter_esp", binaryMessenger: registrar.messenger())
     let instance = SwiftFlutterEspPlugin()
@@ -9,6 +12,10 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-    result("iOS " + UIDevice.current.systemVersion)
+      ESPProvisionManager.shared.searchESPDevices(devicePrefix: "PROV_", transport: .ble, security: .secure) {deviceList, error in
+          DispatchQueue.main.async {
+              result(deviceList?.map {$0.name}.joined(separator:", "))
+          }
+      }
   }
 }

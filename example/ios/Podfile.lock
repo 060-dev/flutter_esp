@@ -1,14 +1,28 @@
 PODS:
+  - Curve25519 (1.1)
+  - ESPProvision (2.0.16):
+    - ESPProvision/Core (= 2.0.16)
+  - ESPProvision/Core (2.0.16):
+    - Curve25519 (~> 1.1.0)
+    - SwiftProtobuf (~> 1.5.0)
   - Flutter (1.0.0)
   - flutter_esp (0.0.1):
+    - ESPProvision
     - Flutter
   - permission_handler_apple (9.0.4):
     - Flutter
+  - SwiftProtobuf (1.5.0)
 
 DEPENDENCIES:
   - Flutter (from `Flutter`)
   - flutter_esp (from `.symlinks/plugins/flutter_esp/ios`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
+
+SPEC REPOS:
+  trunk:
+    - Curve25519
+    - ESPProvision
+    - SwiftProtobuf
 
 EXTERNAL SOURCES:
   Flutter:
@@ -19,9 +33,12 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
 
 SPEC CHECKSUMS:
+  Curve25519: 5f595e906bd962248665978e2992a1fe96e2d831
+  ESPProvision: 2e9b4b72d8bb880051882836b17f28f6537a7b77
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
-  flutter_esp: 881ea9c4190b2d995725bf2f48926e92f008eed8
+  flutter_esp: 32da4f39fe7fe02beb3b462708e1b765f2ba0058
   permission_handler_apple: 44366e37eaf29454a1e7b1b7d736c2cceaeb17ce
+  SwiftProtobuf: 241400280f912735c1e1b9fe675fdd2c6c4d42e2
 
 PODFILE CHECKSUM: 4e8f8b2be68aeea4c0d5beb6ff1e79fface1d048
 
