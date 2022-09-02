@@ -8,7 +8,12 @@ class MockFlutterEspPlatform
     with MockPlatformInterfaceMixin
     implements FlutterEspPlatform {
   @override
-  Future<List<String>?> searchBluetoothDevices() => Future.value(['42']);
+  Future<List<String>?> searchBluetoothDevices(
+          [SearchArguments args = const SearchArguments()]) =>
+      Future.value(['42']);
+
+  @override
+  Future<void> connectBluetoothDevice(ConnectArguments args) => Future.value();
 }
 
 void main() {

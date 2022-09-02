@@ -13,7 +13,15 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
       switch call.method {
-      case "searchBluetoothDevices": btSearch(result)
+      case "searchBluetoothDevices":
+          if let args = call.arguments as? Dictionary<String, Any>,
+             let prefix = args["prefix"] as? String,
+             let secure = args["secure"] as? Bool
+          {
+              btSearch(result, prefix: prefix, secure: secure)
+          }else{
+              result(FlutterError.init(code: "BAD_ARGUMENTS", message: nil, details: nil))
+          }
           break
       default: result(FlutterMethodNotImplemented)
           break
@@ -22,8 +30,8 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
      
   }
 
-    private func btSearch(_ result: @escaping FlutterResult){
-        ESPProvisionManager.shared.searchESPDevices(devicePrefix: "PROV_", transport: .ble, security: .secure) {
+    private func btSearch(_ result: @escaping FlutterResult, prefix: String = "PROV_", secure: Bool = true){
+        ESPProvisionManager.shared.searchESPDevices(devicePrefix: prefix, transport: .ble, security: secure ? .secure : .unsecure) {
             deviceList, error in
             DispatchQueue.main.async {
                 result(deviceList?.map {$0.name})

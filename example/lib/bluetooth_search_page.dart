@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_esp/flutter_esp.dart';
+import 'package:flutter_esp/flutter_esp_platform_interface.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class BluetoothSearchPage extends StatefulWidget {
@@ -33,7 +34,7 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
   _ScanState state = _ScanState.loading();
 
   // Device name filter
-  final String _prefix = 'PROV_';
+  final String _prefix = 'ESP_';
 
   @override
   void initState() {
@@ -56,7 +57,9 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
     List<String> devices = [];
     String? error;
     try {
-      devices = await _flutterEspPlugin.searchBluetoothDevices() ?? [];
+      devices = await _flutterEspPlugin
+              .searchBluetoothDevices(SearchArguments(prefix: _prefix)) ??
+          [];
     } on PlatformException catch (e) {
       error = 'Failed to get devices: ${e.code} | ${e.message}';
     }
@@ -139,18 +142,23 @@ class _DeviceList extends StatelessWidget {
     if (state.loading) {
       return const Center(child: CircularProgressIndicator());
     } else if (state.error != null) {
-      return Padding(
-        padding: _contentPadding,
-        child: Text(
-          state.error!,
-          style: TextStyle(color: Theme.of(context).colorScheme.error),
+      return Center(
+        child: Padding(
+          padding: _contentPadding,
+          child: Text(
+            state.error!,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
         ),
       );
     } else if (state.devices.isEmpty) {
       return const Center(
         child: Padding(
           padding: _contentPadding,
-          child: Text('No devices found. Check the prefix filter below.'),
+          child: Text(
+            'No devices found. Please, check the prefix filter below.',
+            textAlign: TextAlign.center,
+          ),
         ),
       );
     } else {

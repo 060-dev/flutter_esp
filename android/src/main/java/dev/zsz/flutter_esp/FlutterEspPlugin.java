@@ -18,6 +18,7 @@ import com.espressif.provisioning.listeners.BleScanListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 import dev.zsz.flutter_esp.models.BleDevice;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -49,6 +50,7 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
     private static final String SCAN_FAILED = "SCAN_FAILED";
     private static final String LOCATION_PERMISSION_NOT_GRANTED = "LOCATION_PERMISSION_NOT_GRANTED";
     private static final String BT_CONNECT_PERMISSION_NOT_GRANTED = "BT_CONNECT_PERMISSION_NOT_GRANTED";
+    private static final String BAD_ARGUMENTS = "BAD_ARGUMENTS";
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
@@ -61,7 +63,14 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
         if (call.method.equals("searchBluetoothDevices")) {
-            btSearch(result);
+            SearchArguments args;
+            try {
+                args = SearchArguments.fromMap(call.arguments);
+            } catch (Exception e) {
+                result.error(BAD_ARGUMENTS, e.getMessage(), null);
+                return;
+            }
+            btSearch(result, args.prefix);
         } else {
             result.notImplemented();
         }
@@ -104,7 +113,7 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
         bleAdapter = null;
     }
 
-    private void btSearch(Result result) {
+    private void btSearch(Result result, String prefix) {
         if (isScanning) {
             result.error(ALREADY_SCANNING, null, null);
             return;
@@ -117,7 +126,7 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
         isScanning = true;
 
         if (activity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            provisionManager.searchBleEspDevices("PROV_", new ScanListener(result));
+            provisionManager.searchBleEspDevices(prefix, new ScanListener(result));
         } else {
             Log.e(TAG, "Not able to start scan as Location permission is not granted.");
             result.error(LOCATION_PERMISSION_NOT_GRANTED, null, null);
@@ -198,5 +207,24 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
             e.printStackTrace();
             isScanning = false;
         }
+    }
+
+    static class SearchArguments {
+        String prefix;
+        boolean secure;
+
+        SearchArguments(String prefix, boolean secure) {
+            this.prefix = prefix;
+            this.secure = secure;
+        }
+
+        // Parse Object to SearchArguments
+        static SearchArguments fromMap(Object arguments) {
+            Map<String, Object> map = (Map<String, Object>) arguments;
+            String prefix = (String) map.get("prefix");
+            boolean secure = (boolean) map.get("secure");
+            return new SearchArguments(prefix, secure);
+        }
+
     }
 }

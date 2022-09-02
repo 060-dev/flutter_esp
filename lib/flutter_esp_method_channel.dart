@@ -10,9 +10,11 @@ class MethodChannelFlutterEsp extends FlutterEspPlatform {
   final methodChannel = const MethodChannel('flutter_esp');
 
   @override
-  Future<List<String>?> searchBluetoothDevices() async {
-    final objects = await methodChannel
-        .invokeMethod<List<Object?>>('searchBluetoothDevices');
+  Future<List<String>?> searchBluetoothDevices(SearchArguments args) async {
+    final objects = await methodChannel.invokeMethod<List<Object?>>(
+      'searchBluetoothDevices',
+      args.toMap(),
+    );
 
     if (objects == null) {
       return null;
@@ -27,5 +29,13 @@ class MethodChannelFlutterEsp extends FlutterEspPlatform {
     }
 
     return result;
+  }
+
+  @override
+  Future<void> connectBluetoothDevice(ConnectArguments args) async {
+    await methodChannel.invokeMethod<void>(
+      'connectBluetoothDevice',
+      args.toMap(),
+    );
   }
 }
