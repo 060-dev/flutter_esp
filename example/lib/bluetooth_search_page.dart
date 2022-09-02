@@ -20,19 +20,17 @@ class BluetoothSearchPage extends StatefulWidget {
   State<BluetoothSearchPage> createState() => _BluetoothSearchPageState();
 }
 
-class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
-  // Text padding insets
-  static const EdgeInsets _contentPadding = EdgeInsets.symmetric(
-    horizontal: 16,
-    vertical: 8,
-  );
+// Text padding insets
+const EdgeInsets _contentPadding = EdgeInsets.symmetric(
+  horizontal: 16,
+  vertical: 8,
+);
 
+class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
   final _flutterEspPlugin = FlutterEsp();
 
   // Bluetooth search state
-  List<String> _devices = [];
-  String? _error;
-  bool _loading = false;
+  _ScanState state = _ScanState.loading();
 
   // Device name filter
   final String _prefix = 'PROV_';
@@ -52,7 +50,7 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
     await Permission.bluetoothScan.request();
 
     setState(() {
-      _loading = true;
+      state = _ScanState.loading();
     });
 
     List<String> devices = [];
@@ -69,9 +67,11 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
     if (!mounted) return;
 
     setState(() {
-      _devices = devices;
-      _error = error;
-      _loading = false;
+      state = _ScanState(
+        devices: devices,
+        error: error,
+        loading: false,
+      );
     });
   }
 
@@ -84,19 +84,27 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
             leading: BackButton(
               onPressed: () => Navigator.pop(context),
             ),
+            actions: [
+              IconButton(
+                onPressed: state.loading ? null : scan,
+                icon: const Icon(Icons.refresh),
+              )
+            ],
           ),
           body: SafeArea(
             child: Column(
               mainAxisSize: MainAxisSize.max,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Expanded(child: _DeviceList(state: state)),
+                const Divider(),
                 Padding(
                   padding: _contentPadding,
                   child: Row(
                     children: [
                       Expanded(
                         child: Text(
-                          'Prefix: $_prefix',
+                          'Filtering by Prefix: $_prefix',
                         ),
                       ),
                       const ElevatedButton(
@@ -111,47 +119,65 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                const Divider(
-                  height: 20,
+                const SizedBox(
+                  height: 12,
                 ),
-                Padding(
-                  padding: _contentPadding,
-                  child: Text(
-                    'Devices',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                ),
-                if (_loading)
-                  const Expanded(
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else if (_error != null)
-                  Padding(
-                    padding: _contentPadding,
-                    child: Text(
-                      _error!,
-                      style:
-                          TextStyle(color: Theme.of(context).colorScheme.error),
-                    ),
-                  )
-                else
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: _devices.length,
-                      itemBuilder: (context, index) {
-                        return ListTile(
-                          title: Text(_devices[index]),
-                          // title: Text(_devices[index].name),
-                          // subtitle: Text(_devices[index].address),
-                          // onTap: () =>
-                          // _flutterEspPlugin.connect(_devices[index].address),
-                        );
-                      },
-                    ),
-                  ),
               ],
             ),
           )),
     );
   }
+}
+
+class _DeviceList extends StatelessWidget {
+  const _DeviceList({super.key, required this.state});
+
+  final _ScanState state;
+
+  @override
+  Widget build(BuildContext context) {
+    if (state.loading) {
+      return const Center(child: CircularProgressIndicator());
+    } else if (state.error != null) {
+      return Padding(
+        padding: _contentPadding,
+        child: Text(
+          state.error!,
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+        ),
+      );
+    } else if (state.devices.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: _contentPadding,
+          child: Text('No devices found. Check the prefix filter below.'),
+        ),
+      );
+    } else {
+      return ListView.builder(
+        itemCount: state.devices.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            title: Text(state.devices[index]),
+            // title: Text(_devices[index].name),
+            // subtitle: Text(_devices[index].address),
+            // onTap: () =>
+            // _flutterEspPlugin.connect(_devices[index].address),
+          );
+        },
+      );
+    }
+  }
+}
+
+class _ScanState {
+  final bool loading;
+  final String? error;
+  final List<String> devices;
+
+  _ScanState(
+      {required this.loading, required this.error, required this.devices});
+
+  factory _ScanState.loading() =>
+      _ScanState(loading: true, error: null, devices: []);
 }
