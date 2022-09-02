@@ -12,10 +12,22 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
   }
 
   public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
-      ESPProvisionManager.shared.searchESPDevices(devicePrefix: "PROV_", transport: .ble, security: .secure) {deviceList, error in
-          DispatchQueue.main.async {
-              result(deviceList?.map {$0.name}.joined(separator:", "))
-          }
+      switch call.method {
+      case "searchBluetoothDevices": btSearch(result)
+          break
+      default: result(FlutterMethodNotImplemented)
+          break
+          
       }
+     
   }
+
+    private func btSearch(_ result: @escaping FlutterResult){
+        ESPProvisionManager.shared.searchESPDevices(devicePrefix: "PROV_", transport: .ble, security: .secure) {
+            deviceList, error in
+            DispatchQueue.main.async {
+                result(deviceList?.map {$0.name})
+            }
+        }
+    }
 }

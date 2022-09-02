@@ -1,9 +1,10 @@
 import 'flutter_esp_platform_interface.dart';
 
 class FlutterEsp {
-  Future<List<String>?> getPlatformVersion() {
-    return FlutterEspPlatform.instance.getPlatformVersion().then((value) {
-      return value?.split(',');
-    });
+  Future<List<String>?> searchBluetoothDevices({
+    String prefix = 'PROV_',
+    bool secure = true,
+  }) async {
+    return FlutterEspPlatform.instance.searchBluetoothDevices();
   }
 }

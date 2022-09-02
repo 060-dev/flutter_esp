@@ -23,7 +23,8 @@ abstract class FlutterEspPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<String?> getPlatformVersion() {
-    throw UnimplementedError('platformVersion() has not been implemented.');
+  Future<List<String>?> searchBluetoothDevices() {
+    throw UnimplementedError(
+        'searchBluetoothDevices() has not been implemented.');
   }
 }

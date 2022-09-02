@@ -7,9 +7,8 @@ import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 class MockFlutterEspPlatform
     with MockPlatformInterfaceMixin
     implements FlutterEspPlatform {
-
   @override
-  Future<String?> getPlatformVersion() => Future.value('42');
+  Future<List<String>?> searchBluetoothDevices() => Future.value(['42']);
 }
 
 void main() {
@@ -19,11 +18,11 @@ void main() {
     expect(initialPlatform, isInstanceOf<MethodChannelFlutterEsp>());
   });
 
-  test('getPlatformVersion', () async {
+  test('searchBluetoothDevices', () async {
     FlutterEsp flutterEspPlugin = FlutterEsp();
     MockFlutterEspPlatform fakePlatform = MockFlutterEspPlatform();
     FlutterEspPlatform.instance = fakePlatform;
 
-    expect(await flutterEspPlugin.getPlatformVersion(), '42');
+    expect(await flutterEspPlugin.searchBluetoothDevices(), ['42']);
   });
 }

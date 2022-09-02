@@ -3,7 +3,6 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_esp/flutter_esp.dart';
-import 'package:flutter_esp_example/home_page.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class BluetoothSearchPage extends StatefulWidget {
@@ -36,7 +35,7 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
   bool _loading = false;
 
   // Device name filter
-  String _prefix = 'PROV_';
+  final String _prefix = 'PROV_';
 
   @override
   void initState() {
@@ -59,7 +58,7 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
     List<String> devices = [];
     String? error;
     try {
-      devices = await _flutterEspPlugin.getPlatformVersion() ?? [];
+      devices = await _flutterEspPlugin.searchBluetoothDevices() ?? [];
     } on PlatformException catch (e) {
       error = 'Failed to get devices: ${e.code} | ${e.message}';
     }

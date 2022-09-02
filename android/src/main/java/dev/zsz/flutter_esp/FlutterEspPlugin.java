@@ -60,8 +60,8 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
 
     @Override
     public void onMethodCall(@NonNull MethodCall call, @NonNull Result result) {
-        if (call.method.equals("getPlatformVersion")) {
-            startScan(result);
+        if (call.method.equals("searchBluetoothDevices")) {
+            btSearch(result);
         } else {
             result.notImplemented();
         }
@@ -104,7 +104,7 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
         bleAdapter = null;
     }
 
-    private void startScan(Result result) {
+    private void btSearch(Result result) {
         if (isScanning) {
             result.error(ALREADY_SCANNING, null, null);
             return;
@@ -126,14 +126,14 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
 
     private class ScanListener implements BleScanListener {
         private final Result result;
-        private final ArrayList<BleDevice> deviceList;
+        private final ArrayList<String> nameList;
         private final HashMap<BluetoothDevice, String> bluetoothDevices;
         private boolean submitted = false;
 
         ScanListener(Result result) {
             this.result = result;
             bluetoothDevices = new HashMap<>();
-            deviceList = new ArrayList<>();
+            nameList = new ArrayList<>();
         }
 
         @Override
@@ -175,7 +175,7 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
                 bleDevice.setBluetoothDevice(device);
 
                 bluetoothDevices.put(device, serviceUuid);
-                deviceList.add(bleDevice);
+                nameList.add(bleDevice.getName());
             }
         }
 
@@ -183,7 +183,7 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
         public void scanCompleted() {
             isScanning = false;
             if (!submitted) {
-                result.success(String.join(", ", bluetoothDevices.values()));
+                result.success(nameList);
                 submitted = true;
             }
         }
