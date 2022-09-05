@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter_esp/flutter_esp.dart';
 import 'package:flutter_esp/flutter_esp_platform_interface.dart';
+import 'package:flutter_esp_example/network_selection_page.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class BluetoothSearchPage extends StatefulWidget {
@@ -34,7 +35,8 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
   _ScanState state = _ScanState.loading();
 
   // Device name filter
-  final String _prefix = 'PROV_';
+  String _prefix = 'PROV_';
+  String? _pop;
 
   @override
   void initState() {
@@ -78,16 +80,6 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
     });
   }
 
-  _connect(String id) {
-    setState(() {
-      state = _ScanState.loading();
-    });
-
-    _flutterEspPlugin.connectBluetoothDevice(ConnectArguments(
-      deviceId: id,
-    ));
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -110,23 +102,45 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                    child: _DeviceList(
-                  state: state,
-                  onSelect: _connect,
-                )),
+                  child: _DeviceList(
+                    state: state,
+                    onSelect: (id) => NetworkSelectionPage.go(
+                      context,
+                      NetworkSelectionPageArgs(
+                        deviceId: id,
+                        proofOfPossession: _pop,
+                      ),
+                    ),
+                  ),
+                ),
                 const Divider(),
+                const SizedBox(height: 8),
                 Padding(
                   padding: _contentPadding,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Filtering by Prefix: $_prefix',
-                        ),
-                      ),
-                      const ElevatedButton(
-                          onPressed: null, child: Text('Change'))
-                    ],
+                  child: TextFormField(
+                    decoration: const InputDecoration(
+                      labelText: 'Prefix Filter',
+                      icon: Icon(Icons.filter_alt),
+                      border: OutlineInputBorder(),
+                    ),
+                    initialValue: _prefix,
+                    onChanged: (value) {
+                      _prefix = value;
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: _contentPadding,
+                  child: TextFormField(
+                    decoration: const InputDecoration(
+                      labelText: 'Proof of Possession Key',
+                      icon: Icon(Icons.key),
+                      border: OutlineInputBorder(),
+                    ),
+                    initialValue: _pop,
+                    onChanged: (value) {
+                      _pop = value;
+                    },
                   ),
                 ),
                 const Padding(

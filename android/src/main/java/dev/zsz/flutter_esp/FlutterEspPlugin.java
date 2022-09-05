@@ -152,7 +152,7 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
         Log.d(TAG, "btConnect: "+id);
         final BluetoothDevice device = this.devicesMap.get(id);
         if(device != null){
-            result.success(device.toString());
+            result.success(device.getAddress());
         }else{
             result.error(DEVICE_NOT_FOUND, null,null);
         }
@@ -195,18 +195,17 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
             if (scanResult.getScanRecord().getServiceUuids() != null && scanResult.getScanRecord().getServiceUuids().size() > 0) {
                 serviceUuid = scanResult.getScanRecord().getServiceUuids().get(0).toString();
             }
-            Log.d(TAG, "Add service UUID : " + serviceUuid);
 
-            if (devicesMap.containsKey(device.hashCode())) {
+            if (devicesMap.containsKey(device.getAddress())) {
                 deviceExists = true;
             }
 
             if (!deviceExists) {
                 BleDevice bleDevice = new BleDevice();
                 bleDevice.setName(scanResult.getScanRecord().getDeviceName());
-                bleDevice.setId(device.toString());
+                bleDevice.setId(device.getAddress());
 
-                devicesMap.put(device.toString(), device);
+                devicesMap.put(device.getAddress(), device);
                 devicesList.add(bleDevice.toMap());
             }
         }

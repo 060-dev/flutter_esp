@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_esp_example/network_selection_page.dart';
 
 import 'bluetooth_search_page.dart';
 import 'home_page.dart';
@@ -17,6 +18,7 @@ class MyApp extends StatelessWidget {
       HomePage.url: (context) => const HomePage(),
       QRCodeScanPage.url: (context) => const QRCodeScanPage(),
       BluetoothSearchPage.url: (context) => const BluetoothSearchPage(),
+      NetworkSelectionPage.url: (context) => const NetworkSelectionPage(),
     });
   }
 }

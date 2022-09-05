@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'flutter_esp_method_channel.dart';
@@ -28,9 +29,15 @@ abstract class FlutterEspPlatform extends PlatformInterface {
         'searchBluetoothDevices() has not been implemented.');
   }
 
-  Future<void> connectBluetoothDevice(ConnectArguments args) {
+  Future<void> connectBluetoothDevice(GetNetworksArguments args) {
     throw UnimplementedError(
         'connectBluetoothDevice() has not been implemented.');
+  }
+
+  Future<List<GetNetworksResult>?> getAvailableNetworks(
+      GetNetworksArguments args) {
+    throw UnimplementedError(
+        'getAvailableNetworks() has not been implemented.');
   }
 }
 
@@ -62,14 +69,43 @@ class SearchResult {
   }
 }
 
-class ConnectArguments {
+class GetNetworksArguments {
   final String deviceId;
+  final String? proofOfPossession;
 
-  const ConnectArguments({required this.deviceId});
+  const GetNetworksArguments({required this.deviceId, this.proofOfPossession});
 
   Map<String, dynamic> toMap() {
     return {
       'deviceId': deviceId,
+      'proofOfPossession': proofOfPossession,
     };
+  }
+}
+
+class GetNetworksResult {
+  final String ssid;
+  final int rssi;
+  final int auth;
+  final Uint8List bssid;
+
+  const GetNetworksResult({
+    required this.ssid,
+    required this.rssi,
+    required this.auth,
+    required this.bssid,
+  });
+
+  factory GetNetworksResult.fromMap(Map<Object?, Object?> map) {
+    return GetNetworksResult(
+      ssid: map['ssid'] as String,
+      rssi: map['rssi'] as int,
+      auth: map['auth'] as int,
+      bssid: map['bssid'] as Uint8List,
+    );
+  }
+
+  String getMacAddress() {
+    return bssid.map((e) => e.toRadixString(16).padLeft(2, '0')).join(':');
   }
 }

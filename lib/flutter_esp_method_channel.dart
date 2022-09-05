@@ -37,12 +37,37 @@ class MethodChannelFlutterEsp extends FlutterEspPlatform {
   }
 
   @override
-  Future<void> connectBluetoothDevice(ConnectArguments args) async {
-    final result = await methodChannel.invokeMethod<void>(
+  Future<void> connectBluetoothDevice(GetNetworksArguments args) async {
+    await methodChannel.invokeMethod<void>(
       'connectBluetoothDevice',
       args.toMap(),
     ) as String?;
+  }
 
-    print('connectBluetoothDevice result: $result');
+  @override
+  Future<List<GetNetworksResult>?> getAvailableNetworks(
+      GetNetworksArguments args) async {
+    final objects = await methodChannel.invokeMethod<List<Object?>>(
+      'getAvailableNetworks',
+      args.toMap(),
+    );
+
+    if (objects == null) {
+      return null;
+    }
+
+    final List<GetNetworksResult> result = [];
+
+    for (final object in objects) {
+      try {
+        result.add(GetNetworksResult.fromMap(object as Map<Object?, Object?>));
+      } catch (e) {
+        if (kDebugMode) {
+          print(e);
+        }
+      }
+    }
+
+    return result;
   }
 }

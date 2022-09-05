@@ -6,7 +6,10 @@ class FlutterEsp {
     return FlutterEspPlatform.instance.searchBluetoothDevices(args);
   }
 
-  Future<void> connectBluetoothDevice(ConnectArguments args) async {
-    return FlutterEspPlatform.instance.connectBluetoothDevice(args);
+  Future<List<GetNetworksResult>?> getAvailableNetworks(
+      GetNetworksArguments args) async {
+    await FlutterEspPlatform.instance.connectBluetoothDevice(args);
+    return FlutterEspPlatform.instance
+        .getAvailableNetworks(GetNetworksArguments(deviceId: args.deviceId));
   }
 }
