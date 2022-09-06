@@ -72,13 +72,16 @@ class SearchResult {
 class GetNetworksArguments {
   final String deviceId;
   final String? proofOfPossession;
+  final bool secure;
 
-  const GetNetworksArguments({required this.deviceId, this.proofOfPossession});
+  const GetNetworksArguments(
+      {required this.deviceId, this.proofOfPossession, this.secure = true});
 
   Map<String, dynamic> toMap() {
     return {
       'deviceId': deviceId,
       'proofOfPossession': proofOfPossession,
+      'secure': secure,
     };
   }
 }
@@ -87,13 +90,13 @@ class GetNetworksResult {
   final String ssid;
   final int rssi;
   final int auth;
-  final Uint8List bssid;
+  final Uint8List? bssid;
 
   const GetNetworksResult({
     required this.ssid,
     required this.rssi,
     required this.auth,
-    required this.bssid,
+    this.bssid,
   });
 
   factory GetNetworksResult.fromMap(Map<Object?, Object?> map) {
@@ -101,11 +104,11 @@ class GetNetworksResult {
       ssid: map['ssid'] as String,
       rssi: map['rssi'] as int,
       auth: map['auth'] as int,
-      bssid: map['bssid'] as Uint8List,
+      bssid: map['bssid'] as Uint8List?,
     );
   }
 
-  String getMacAddress() {
-    return bssid.map((e) => e.toRadixString(16).padLeft(2, '0')).join(':');
+  String? getMacAddress() {
+    return bssid?.map((e) => e.toRadixString(16).padLeft(2, '0')).join(':');
   }
 }

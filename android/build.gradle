@@ -37,4 +37,5 @@ android {
 
 dependencies{
     implementation 'com.github.espressif:esp-idf-provisioning-android:lib-2.0.14'
+    implementation 'org.greenrobot:eventbus:3.3.1'
 }

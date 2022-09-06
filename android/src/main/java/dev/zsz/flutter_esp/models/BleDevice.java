@@ -1,32 +1,34 @@
 package dev.zsz.flutter_esp.models;
 
+import android.bluetooth.BluetoothDevice;
+
 import java.util.HashMap;
 
 public class BleDevice {
-    private String name;
-    private String id;
+    private final String name;
+    private final BluetoothDevice device;
+    private final String uuid;
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
+    public BleDevice(String name, BluetoothDevice device, String uuid) {
         this.name = name;
+        this.device = device;
+        this.uuid = uuid;
     }
 
-    public String getId() {
-        return id;
+    // Getters
+    public BluetoothDevice getDevice() {
+        return device;
     }
 
-    public void setId(String hash) {
-        this.id = hash;
+    public String getUuid() {
+        return uuid;
     }
 
     // Parse to HashMap
     public HashMap<String, Object> toMap() {
         HashMap<String, Object> map = new HashMap<>();
         map.put("name", name);
-        map.put("id", id);
+        map.put("id", device.getAddress());
         return map;
     }
 }

@@ -163,7 +163,7 @@ class _NetworkList extends StatelessWidget {
         final network = state.networks![index];
         return ListTile(
           title: Text(network.ssid),
-          subtitle: Text(network.getMacAddress().toUpperCase()),
+          subtitle: Text(network.getMacAddress()?.toUpperCase() ?? ""),
           trailing: getIconForRssi(network.rssi),
           onTap: () => onSelect(network),
         );

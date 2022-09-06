@@ -9,16 +9,23 @@ import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Handler;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.espressif.provisioning.DeviceConnectionEvent;
+import com.espressif.provisioning.ESPConstants;
 import com.espressif.provisioning.ESPProvisionManager;
+import com.espressif.provisioning.WiFiAccessPoint;
 import com.espressif.provisioning.listeners.BleScanListener;
+import com.espressif.provisioning.listeners.ResponseListener;
+import com.espressif.provisioning.listeners.WiFiScanListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import dev.zsz.flutter_esp.models.BleDevice;
 import io.flutter.embedding.engine.plugins.FlutterPlugin;
@@ -28,6 +35,10 @@ import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 /**
  * FlutterEspPlugin
@@ -41,18 +52,32 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
     private Activity activity;
     private BluetoothAdapter bleAdapter;
     private boolean isScanning = false;
+
+    // TODO: improve hadling of variables that are relevant for a single invocation
+    private Result connectionResult = null;
+    private ESPConstants.SecurityType securityType = ESPConstants.SecurityType.SECURITY_1;
+    private String proofOfPossession = null;
+
+    private boolean isDeviceConnected = false;
     private ESPProvisionManager provisionManager;
-    private final HashMap<String, BluetoothDevice> devicesMap = new HashMap<>();
+    private final Handler handler = new Handler();
+    private final HashMap<String, BleDevice> devicesMap = new HashMap<>();
 
     private static final String TAG = FlutterEspPlugin.class.getSimpleName();
 
     private static final String BT_NOT_ENABLED = "BT_NOT_ENABLED";
     private static final String ALREADY_SCANNING = "ALREADY_SCANNING";
-    private static final String SCAN_FAILED = "SCAN_FAILED";
+    private static final String BT_SCAN_FAILED = "SCAN_FAILED";
     private static final String LOCATION_PERMISSION_NOT_GRANTED = "LOCATION_PERMISSION_NOT_GRANTED";
     private static final String BT_CONNECT_PERMISSION_NOT_GRANTED = "BT_CONNECT_PERMISSION_NOT_GRANTED";
     private static final String BAD_ARGUMENTS = "BAD_ARGUMENTS";
+    private static final String ALREADY_CONNECTING = "ALREADY_CONNECTING";
     private static final String DEVICE_NOT_FOUND = "DEVICE_NOT_FOUND";
+    private static final String MISSING_POP = "MISSING_POP";
+    private static final String WIFI_SCAN_FAILED = "WIFI_SCAN_FAILED";
+    private static final String CONNECTION_FAILED = "CONNECTION_FAILED";
+
+    private static final long DEVICE_CONNECT_TIMEOUT = 20000;
 
     @Override
     public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
@@ -60,6 +85,8 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
         channel.setMethodCallHandler(this);
 
         provisionManager = ESPProvisionManager.getInstance(flutterPluginBinding.getApplicationContext());
+
+        EventBus.getDefault().register(this);
     }
 
     @Override
@@ -83,7 +110,17 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
                     result.error(BAD_ARGUMENTS, e.getMessage(), null);
                     return;
                 }
-                btConnect(result, connectArguments.deviceId);
+                btConnect(result, connectArguments.deviceId, connectArguments.secure, connectArguments.proofOfPossession);
+                break;
+            case "getAvailableNetworks":
+                GetNetworksArguments getNetworksArguments;
+                try {
+                    getNetworksArguments = GetNetworksArguments.fromMap(call.arguments);
+                } catch (Exception e) {
+                    result.error(BAD_ARGUMENTS, e.getMessage(), null);
+                    return;
+                }
+                getAvailableNetworks(result, getNetworksArguments.deviceId);
                 break;
             default:
                 result.notImplemented();
@@ -133,12 +170,17 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
             result.error(ALREADY_SCANNING, null, null);
             return;
         }
+        if (connectionResult != null || isDeviceConnected) {
+            result.error(ALREADY_CONNECTING, null, null);
+            return;
+        }
         if (bleAdapter == null || !bleAdapter.isEnabled()) {
             result.error(BT_NOT_ENABLED, null, null);
             return;
         }
 
         isScanning = true;
+        provisionManager.createESPDevice(ESPConstants.TransportType.TRANSPORT_BLE, securityType);
 
         if (activity.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             provisionManager.searchBleEspDevices(prefix, new ScanListener(result));
@@ -148,19 +190,141 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
         }
     }
 
-    private void btConnect(Result result, String id) {
-        Log.d(TAG, "btConnect: "+id);
-        final BluetoothDevice device = this.devicesMap.get(id);
-        if(device != null){
-            result.success(device.getAddress());
-        }else{
-            result.error(DEVICE_NOT_FOUND, null,null);
+    private void btConnect(Result result, String id, Boolean secure, String pop) {
+        Log.d(TAG, "btConnect: " + id);
+        final BleDevice device = this.devicesMap.get(id);
+        if (device != null) {
+            securityType = secure != Boolean.TRUE ? ESPConstants.SecurityType.SECURITY_0 : ESPConstants.SecurityType.SECURITY_1;
+            connectionResult = result;
+            proofOfPossession = pop;
+
+            provisionManager.getEspDevice().connectBLEDevice(device.getDevice(), device.getUuid());
+            handler.postDelayed(disconnectDeviceTask, DEVICE_CONNECT_TIMEOUT);
+        } else {
+            result.error(DEVICE_NOT_FOUND, null, null);
         }
+    }
+
+    private void getAvailableNetworks(Result result, String id) {
+        final BleDevice device = this.devicesMap.get(id);
+        Log.d(TAG, "getAvailableNetworks: " + id);
+        if (device != null) {
+            provisionManager.getEspDevice().scanNetworks(
+                    new WiFiScanListener() {
+                        private Boolean isSubmitted = false;
+
+                        @Override
+                        public void onWifiListReceived(ArrayList<WiFiAccessPoint> wifiList) {
+                            Log.d(TAG, "onWifiListReceived: " + wifiList.size());
+                            ArrayList<Map<String, Object>> networks = new ArrayList<>();
+                            for (WiFiAccessPoint accessPoint : wifiList) {
+                                Map<String, Object> network = new HashMap<>();
+                                network.put("ssid", accessPoint.getWifiName());
+                                network.put("rssi", accessPoint.getRssi());
+                                network.put("auth", accessPoint.getSecurity());
+                                networks.add(network);
+                            }
+                            if (!isSubmitted) {
+                                isSubmitted = true;
+                                result.success(networks);
+                            }
+                        }
+
+                        @Override
+                        public void onWiFiScanFailed(Exception e) {
+                            if (!isSubmitted) {
+                                isSubmitted = true;
+                                result.error(WIFI_SCAN_FAILED, e.getMessage(), null);
+                            }
+                        }
+                    }
+            );
+        } else {
+            result.error(DEVICE_NOT_FOUND, null, null);
+        }
+    }
+
+    private final Runnable disconnectDeviceTask = () -> {
+
+        Log.e(TAG, "Disconnect device");
+        // TODO Disconnect device
+        Result result = connectionResult;
+        connectionResult = null;
+
+        if (result != null) {
+            result.error(CONNECTION_FAILED, null, null);
+        }
+    };
+
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onEvent(DeviceConnectionEvent event) {
+        handler.removeCallbacks(disconnectDeviceTask);
+
+        final Result result = connectionResult;
+        connectionResult = null;
+
+        switch (event.getEventType()) {
+            case ESPConstants.EVENT_DEVICE_CONNECTED:
+                Log.d(TAG, "Device Connected Event Received");
+                ArrayList<String> deviceCaps = provisionManager.getEspDevice().getDeviceCapabilities();
+
+                isDeviceConnected = true;
+                if (result == null) {
+                    return;
+                }
+
+                if (deviceCaps != null && !deviceCaps.contains("no_pop") && securityType == ESPConstants.SecurityType.SECURITY_1) {
+                    if (proofOfPossession != null && !proofOfPossession.isEmpty()) {
+                        provisionManager.getEspDevice().setProofOfPossession(proofOfPossession);
+                        provisionManager.getEspDevice().initSession(new SessionListener(result));
+                    } else {
+                        result.error(MISSING_POP, null, null);
+                    }
+                } else {
+                    provisionManager.getEspDevice().initSession(new SessionListener(result));
+                }
+                return;
+
+            case ESPConstants.EVENT_DEVICE_DISCONNECTED:
+                isDeviceConnected = false;
+                Log.d(TAG, "Device disconnected");
+                break;
+
+            case ESPConstants.EVENT_DEVICE_CONNECTION_FAILED:
+                isDeviceConnected = false;
+                Log.e(TAG, "Failed to connect with device");
+
+                if (result == null) {
+                    return;
+                }
+
+                result.error(CONNECTION_FAILED, null, null);
+                break;
+        }
+    }
+
+    private static class SessionListener implements ResponseListener {
+        private final Result result;
+
+        SessionListener(Result result) {
+            this.result = result;
+        }
+
+            @Override
+            public void onSuccess(byte[] returnData) {
+                result.success(null);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                result.error(CONNECTION_FAILED, e.getMessage(), null);
+            }
     }
 
     private class ScanListener implements BleScanListener {
         private final Result result;
-        private final ArrayList<HashMap<String,Object>> devicesList;
+        private final ArrayList<HashMap<String, Object>> devicesList;
         private boolean submitted = false;
 
         ScanListener(Result result) {
@@ -188,9 +352,9 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
                 }
             }
 
-            Log.d(TAG, "====== onPeripheralFound ===== " + device.getName());
             boolean deviceExists = false;
             String serviceUuid = "";
+
 
             if (scanResult.getScanRecord().getServiceUuids() != null && scanResult.getScanRecord().getServiceUuids().size() > 0) {
                 serviceUuid = scanResult.getScanRecord().getServiceUuids().get(0).toString();
@@ -201,11 +365,13 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
             }
 
             if (!deviceExists) {
-                BleDevice bleDevice = new BleDevice();
-                bleDevice.setName(scanResult.getScanRecord().getDeviceName());
-                bleDevice.setId(device.getAddress());
+                BleDevice bleDevice = new BleDevice(
+                        scanResult.getScanRecord().getDeviceName(),
+                        device,
+                        serviceUuid
+                );
 
-                devicesMap.put(device.getAddress(), device);
+                devicesMap.put(device.getAddress(), bleDevice);
                 devicesList.add(bleDevice.toMap());
             }
         }
@@ -222,7 +388,7 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
         @Override
         public void onFailure(Exception e) {
             if (!submitted) {
-                result.error(SCAN_FAILED, e.getMessage(), null);
+                result.error(BT_SCAN_FAILED, e.getMessage(), null);
                 submitted = true;
             }
             Log.e(TAG, e.getMessage());
@@ -249,18 +415,40 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
         }
 
     }
+
     static class ConnectArguments {
         String deviceId;
+        Boolean secure;
+        String proofOfPossession;
 
-        ConnectArguments(String deviceId) {
+        ConnectArguments(String deviceId, Boolean secure, String proofOfPossession) {
             this.deviceId = deviceId;
+            this.secure = secure;
+            this.proofOfPossession = proofOfPossession;
         }
 
         // Parse Object to ConnectArguments
         static ConnectArguments fromMap(Object arguments) {
             Map<String, Object> map = (Map<String, Object>) arguments;
             String deviceId = (String) map.get("deviceId");
-            return new ConnectArguments(deviceId);
+            Boolean secure = (Boolean) map.get("secure");
+            String proofOfPossession = (String) map.get("proofOfPossession");
+            return new ConnectArguments(deviceId, secure, proofOfPossession);
+        }
+    }
+
+    static class GetNetworksArguments {
+        String deviceId;
+
+        GetNetworksArguments(String deviceId) {
+            this.deviceId = deviceId;
+        }
+
+        // Parse Object to GetNetworksArguments
+        static GetNetworksArguments fromMap(Object arguments) {
+            Map<String, Object> map = (Map<String, Object>) arguments;
+            String deviceId = (String) map.get("deviceId");
+            return new GetNetworksArguments(deviceId);
         }
     }
 }
