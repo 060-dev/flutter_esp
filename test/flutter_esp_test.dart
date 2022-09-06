@@ -28,6 +28,9 @@ class MockFlutterEspPlatform
           bssid: Uint8List(1),
         ),
       ]);
+
+  @override
+  Future<void> provision(ProvisionArguments args) => Future.value();
 }
 
 void main() {

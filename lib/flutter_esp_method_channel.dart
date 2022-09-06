@@ -70,4 +70,12 @@ class MethodChannelFlutterEsp extends FlutterEspPlatform {
 
     return result;
   }
+
+  @override
+  Future<void> provision(ProvisionArguments args) async {
+    await methodChannel.invokeMethod(
+      'provision',
+      args.toMap(),
+    );
+  }
 }

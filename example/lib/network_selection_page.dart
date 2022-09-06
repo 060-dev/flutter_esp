@@ -18,9 +18,16 @@ class NetworkSelectionPage extends StatefulWidget {
   State<NetworkSelectionPage> createState() => _NetworkSelectionPageState();
 }
 
+// Text padding insets
+const EdgeInsets _contentPadding = EdgeInsets.symmetric(
+  horizontal: 16,
+  vertical: 8,
+);
+
 class _NetworkSelectionPageState extends State<NetworkSelectionPage> {
   final FlutterEsp _flutterEspPlugin = FlutterEsp();
   _NetworksState state = _NetworksState.loading();
+  String? _password;
 
   @override
   void initState() {
@@ -70,6 +77,17 @@ class _NetworkSelectionPageState extends State<NetworkSelectionPage> {
     });
   }
 
+  _provision(GetNetworksResult network) {
+    // Extract route arguments
+    final args =
+        ModalRoute.of(context)!.settings.arguments as NetworkSelectionPageArgs;
+    _flutterEspPlugin.provision(ProvisionArguments(
+      deviceId: args.deviceId,
+      ssid: network.ssid,
+      password: _password,
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -83,8 +101,23 @@ class _NetworkSelectionPageState extends State<NetworkSelectionPage> {
         ],
       ),
       body: SafeArea(
-        child: _NetworkList(
-            state: state, onSelect: (network) => print(network.ssid)),
+        child: Column(
+          children: [
+            Expanded(child: _NetworkList(state: state, onSelect: _provision)),
+            const Divider(),
+            Padding(
+              padding: _contentPadding,
+              child: TextFormField(
+                decoration: const InputDecoration(
+                  hintText: 'Password',
+                  border: OutlineInputBorder(),
+                  icon: Icon(Icons.key),
+                ),
+                onChanged: (value) => _password = value,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

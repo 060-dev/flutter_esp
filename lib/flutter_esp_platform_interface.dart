@@ -39,6 +39,10 @@ abstract class FlutterEspPlatform extends PlatformInterface {
     throw UnimplementedError(
         'getAvailableNetworks() has not been implemented.');
   }
+
+  Future<void> provision(ProvisionArguments args) {
+    throw UnimplementedError('provision() has not been implemented.');
+  }
 }
 
 class SearchArguments {
@@ -82,6 +86,23 @@ class GetNetworksArguments {
       'deviceId': deviceId,
       'proofOfPossession': proofOfPossession,
       'secure': secure,
+    };
+  }
+}
+
+class ProvisionArguments {
+  final String deviceId;
+  final String ssid;
+  final String? password;
+
+  const ProvisionArguments(
+      {required this.deviceId, required this.ssid, this.password});
+
+  Map<String, dynamic> toMap() {
+    return {
+      'deviceId': deviceId,
+      'ssid': ssid,
+      'password': password,
     };
   }
 }

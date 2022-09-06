@@ -12,4 +12,8 @@ class FlutterEsp {
     return FlutterEspPlatform.instance
         .getAvailableNetworks(GetNetworksArguments(deviceId: args.deviceId));
   }
+
+  Future<void> provision(ProvisionArguments args) async {
+    await FlutterEspPlatform.instance.provision(args);
+  }
 }
