@@ -161,7 +161,8 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
 }
 
 class _DeviceList extends StatelessWidget {
-  const _DeviceList({super.key, required this.state, required this.onSelect});
+  const _DeviceList({Key? key, required this.state, required this.onSelect})
+      : super(key: key);
 
   // Bluetooth search state
   final _ScanState state;
