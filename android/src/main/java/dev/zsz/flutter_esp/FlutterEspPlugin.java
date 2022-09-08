@@ -19,6 +19,7 @@ import com.espressif.provisioning.ESPConstants;
 import com.espressif.provisioning.ESPProvisionManager;
 import com.espressif.provisioning.WiFiAccessPoint;
 import com.espressif.provisioning.listeners.BleScanListener;
+import com.espressif.provisioning.listeners.ProvisionListener;
 import com.espressif.provisioning.listeners.ResponseListener;
 import com.espressif.provisioning.listeners.WiFiScanListener;
 
@@ -58,7 +59,6 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
     private ESPConstants.SecurityType securityType = ESPConstants.SecurityType.SECURITY_1;
     private String proofOfPossession = null;
 
-    private boolean isDeviceConnected = false;
     private ESPProvisionManager provisionManager;
     private final Handler handler = new Handler();
     private final HashMap<String, BleDevice> devicesMap = new HashMap<>();
@@ -71,11 +71,17 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
     private static final String LOCATION_PERMISSION_NOT_GRANTED = "LOCATION_PERMISSION_NOT_GRANTED";
     private static final String BT_CONNECT_PERMISSION_NOT_GRANTED = "BT_CONNECT_PERMISSION_NOT_GRANTED";
     private static final String BAD_ARGUMENTS = "BAD_ARGUMENTS";
-    private static final String ALREADY_CONNECTING = "ALREADY_CONNECTING";
     private static final String DEVICE_NOT_FOUND = "DEVICE_NOT_FOUND";
     private static final String MISSING_POP = "MISSING_POP";
     private static final String WIFI_SCAN_FAILED = "WIFI_SCAN_FAILED";
     private static final String CONNECTION_FAILED = "CONNECTION_FAILED";
+    // Provision failure codes
+    private static final String WIFI_CONFIG_FAILED = "WIFI_CONFIG_FAILED";
+    private static final String WIFI_CONFIG_APPLY_FAILED = "WIFI_CONFIG_APPLY_FAILED";
+    private static final String PROVISION_FAILED = "PROVISION_FAILED";
+    private static final String PROVISION_FAILED_FROM_DEVICE = "PROVISION_FAILED_FROM_DEVICE";
+    private static final String CREATE_SESSION_FAILED = "CREATE_SESSION_FAILED";
+
 
     private static final long DEVICE_CONNECT_TIMEOUT = 20000;
 
@@ -121,6 +127,16 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
                     return;
                 }
                 getAvailableNetworks(result, getNetworksArguments.deviceId);
+                break;
+                case "provision":
+                ProvisionArguments provisionArguments;
+                try {
+                    provisionArguments = ProvisionArguments.fromMap(call.arguments);
+                } catch (Exception e) {
+                    result.error(BAD_ARGUMENTS, e.getMessage(), null);
+                    return;
+                }
+                provision(result, provisionArguments.deviceId, provisionArguments.ssid, provisionArguments.password);
                 break;
             default:
                 result.notImplemented();
@@ -168,10 +184,6 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
     private void btSearch(Result result, String prefix) {
         if (isScanning) {
             result.error(ALREADY_SCANNING, null, null);
-            return;
-        }
-        if (connectionResult != null || isDeviceConnected) {
-            result.error(ALREADY_CONNECTING, null, null);
             return;
         }
         if (bleAdapter == null || !bleAdapter.isEnabled()) {
@@ -244,6 +256,81 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
         }
     }
 
+    private void provision(Result result, String id, String ssid, String password) {
+        final BleDevice device = this.devicesMap.get(id);
+        Log.d(TAG, "provision: " + id);
+        if (device != null) {
+            provisionManager.getEspDevice().provision(
+                    ssid,
+                    password,
+                    new ProvisionListener() {
+                        private Boolean isSubmitted = false;
+
+                        @Override
+                        public void wifiConfigSent() {
+                            // Do nothing
+                        }
+
+
+                        @Override
+                        public void wifiConfigApplied() {
+                            // Do nothing
+                        }
+
+
+
+                        @Override
+                        public void deviceProvisioningSuccess() {
+                            if (!isSubmitted) {
+                                isSubmitted = true;
+                                result.success(null);
+                            }
+                        }
+
+                        @Override
+                        public void createSessionFailed(Exception e) {
+                            if (!isSubmitted) {
+                                isSubmitted = true;
+                                result.error(CREATE_SESSION_FAILED, e.getMessage(), null);
+                            }
+                        }
+
+                        @Override
+                        public void wifiConfigFailed(Exception e) {
+                            if (!isSubmitted) {
+                                isSubmitted = true;
+                                result.error(WIFI_CONFIG_FAILED, e.getMessage(), null);
+                            }
+                        }
+                        @Override
+                        public void wifiConfigApplyFailed(Exception e) {
+                            if (!isSubmitted) {
+                                isSubmitted = true;
+                                result.error(WIFI_CONFIG_APPLY_FAILED, e.getMessage(), null);
+                            }
+                        }
+                        @Override
+                        public void onProvisioningFailed(Exception e) {
+                            if (!isSubmitted) {
+                                isSubmitted = true;
+                                result.error(PROVISION_FAILED, e.getMessage(), null);
+                            }
+                        }
+
+                        @Override
+                        public void provisioningFailedFromDevice(ESPConstants.ProvisionFailureReason failureReason) {
+                            if (!isSubmitted) {
+                                isSubmitted = true;
+                                result.error(PROVISION_FAILED_FROM_DEVICE, failureReason.toString(), null);
+                            }
+                        }
+                    }
+            );
+        } else {
+            result.error(DEVICE_NOT_FOUND, null, null);
+        }
+    }
+
     private final Runnable disconnectDeviceTask = () -> {
 
         Log.e(TAG, "Disconnect device");
@@ -269,7 +356,6 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
                 Log.d(TAG, "Device Connected Event Received");
                 ArrayList<String> deviceCaps = provisionManager.getEspDevice().getDeviceCapabilities();
 
-                isDeviceConnected = true;
                 if (result == null) {
                     return;
                 }
@@ -287,12 +373,10 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
                 return;
 
             case ESPConstants.EVENT_DEVICE_DISCONNECTED:
-                isDeviceConnected = false;
                 Log.d(TAG, "Device disconnected");
                 break;
 
             case ESPConstants.EVENT_DEVICE_CONNECTION_FAILED:
-                isDeviceConnected = false;
                 Log.e(TAG, "Failed to connect with device");
 
                 if (result == null) {
@@ -449,6 +533,27 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler, Activ
             Map<String, Object> map = (Map<String, Object>) arguments;
             String deviceId = (String) map.get("deviceId");
             return new GetNetworksArguments(deviceId);
+        }
+    }
+
+    static class ProvisionArguments{
+        String deviceId;
+        String ssid;
+        String password;
+
+        ProvisionArguments(String deviceId, String ssid, String password){
+            this.deviceId = deviceId;
+            this.ssid = ssid;
+            this.password = password;
+        }
+
+        // Parse Object to ProvisionArguments
+        static ProvisionArguments fromMap(Object arguments) {
+            Map<String, Object> map = (Map<String, Object>) arguments;
+            String deviceId = (String) map.get("deviceId");
+            String ssid = (String) map.get("ssid");
+            String password = (String) map.get("password");
+            return new ProvisionArguments(deviceId, ssid, password);
         }
     }
 }
