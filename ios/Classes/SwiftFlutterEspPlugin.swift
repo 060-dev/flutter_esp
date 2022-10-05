@@ -132,14 +132,13 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
                     case let .failure(error):
                         switch error {
                         case .wifiStatusAuthenticationError:
-                            result(FlutterError(code: "WIFI_AUTHENTICATION_FAILED", message: nil, details: nil))
+                            result(FlutterError(code: "WIFI_AUTHENTICATION_FAILED", message: error.description, details: nil))
                             return
                         default:
-                            result(FlutterError(code: "COULD_NOT_PROVISION", message: nil, details: nil))
+                            result(FlutterError(code: "COULD_NOT_PROVISION", message: error.description, details: nil))
                             return
                         }
                     default:
-                        result(FlutterError(code: "COULD_NOT_PROVISION", message: nil, details: nil))
                         return
                     }
                 }
