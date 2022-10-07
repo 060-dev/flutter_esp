@@ -37,6 +37,17 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
                 result(FlutterError(code: "BAD_ARGUMENTS", message: nil, details: nil))
             }
             break
+        case "createBluetoothDevice":
+            if let args = call.arguments as? Dictionary<String, Any>,
+               let name = args["name"] as? String,
+               let pop = args["pop"] as? String,
+               let secure = args["secure"] as? Bool
+            {
+                btCreate(result, name: name, pop: pop, secure: secure)
+            }else{
+                result(FlutterError(code: "BAD_ARGUMENTS", message: nil, details: nil))
+            }
+            break
         case "connectBluetoothDevice":
             if let args = call.arguments as? Dictionary<String, Any>,
                let id = args["deviceId"] as? String
@@ -78,9 +89,23 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
             deviceList, error in
             if(error != nil){
                 result(FlutterError(code: "SEARCH_ERROR", message: error?.description, details: nil))
+            }else{
+                self.bleDevices = deviceList?.reduce(into: [String: ESPDevice]()) {$0[String($1.hashValue)] = $1}
+                result(deviceList?.map {["name": $0.name, "id": String($0.hashValue)]})
             }
-            self.bleDevices = deviceList?.reduce(into: [String: ESPDevice]()) {$0[String($1.hashValue)] = $1}
-            result(deviceList?.map {["name": $0.name, "id": String($0.hashValue)]})
+        }
+    }
+    
+    private func btCreate(_ result: @escaping FlutterResult, name: String, pop: String, secure: Bool = true){
+        ESPProvisionManager.shared.createESPDevice(deviceName: name, transport: .ble, security: secure ? .secure : .unsecure, proofOfPossession: pop) {
+            device, error in
+            if(error != nil || device == nil){
+                result(FlutterError(code: "CREATE_ERROR", message: device == nil ? "Device is nil" : error?.description, details: nil))
+                return
+            }else{
+                self.bleDevices = [name: device!]
+                result(true)
+            }
         }
     }
     

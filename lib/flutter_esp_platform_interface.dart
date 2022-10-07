@@ -29,6 +29,11 @@ abstract class FlutterEspPlatform extends PlatformInterface {
         'searchBluetoothDevices() has not been implemented.');
   }
 
+  Future<bool> createBluetoothDevice(CreateArguments args) {
+    throw UnimplementedError(
+        'searchBluetoothDevices() has not been implemented.');
+  }
+
   Future<void> connectBluetoothDevice(GetNetworksArguments args) {
     throw UnimplementedError(
         'connectBluetoothDevice() has not been implemented.');
@@ -54,6 +59,22 @@ class SearchArguments {
   Map<String, dynamic> toMap() {
     return {
       'prefix': prefix,
+      'secure': secure,
+    };
+  }
+}
+
+class CreateArguments {
+  final String name;
+  final String? pop;
+  final bool? secure;
+
+  const CreateArguments({required this.name, this.pop, this.secure = true});
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'pop': pop,
       'secure': secure,
     };
   }

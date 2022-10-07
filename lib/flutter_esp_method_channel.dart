@@ -37,6 +37,15 @@ class MethodChannelFlutterEsp extends FlutterEspPlatform {
   }
 
   @override
+  Future<bool> createBluetoothDevice(CreateArguments args) async {
+    return (await methodChannel.invokeMethod<void>(
+          'createBluetoothDevice',
+          args.toMap(),
+        ) as bool?) ??
+        false;
+  }
+
+  @override
   Future<void> connectBluetoothDevice(GetNetworksArguments args) async {
     await methodChannel.invokeMethod<void>(
       'connectBluetoothDevice',

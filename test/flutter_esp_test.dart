@@ -31,6 +31,10 @@ class MockFlutterEspPlatform
 
   @override
   Future<void> provision(ProvisionArguments args) => Future.value();
+
+  @override
+  Future<bool> createBluetoothDevice(CreateArguments args) =>
+      Future.value(true);
 }
 
 void main() {
