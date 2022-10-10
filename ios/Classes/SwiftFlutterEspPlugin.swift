@@ -99,8 +99,11 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
     private func btCreate(_ result: @escaping FlutterResult, name: String, pop: String, secure: Bool = true){
         ESPProvisionManager.shared.createESPDevice(deviceName: name, transport: .ble, security: secure ? .secure : .unsecure, proofOfPossession: pop) {
             device, error in
-            if(error != nil || device == nil){
-                result(FlutterError(code: "CREATE_ERROR", message: device == nil ? "Device is nil" : error?.description, details: nil))
+            if(device == nil){
+                result(FlutterError(code: "CREATE_ERROR", message: "Device is nil" , details: nil))
+                return
+            } else if(error != nil){
+                result(FlutterError(code: "CREATE_ERROR", message: error?.description, details: nil))
                 return
             }else{
                 self.bleDevices = [name: device!]

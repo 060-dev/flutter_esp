@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_esp/flutter_esp.dart';
+import 'package:flutter_esp/flutter_esp_platform_interface.dart';
 import 'package:flutter_esp_example/bluetooth_search_page.dart';
+import 'package:flutter_esp_example/network_selection_page.dart';
 
 class QRCodeScanPage extends StatelessWidget {
   const QRCodeScanPage({super.key});
@@ -18,6 +21,26 @@ class QRCodeScanPage extends StatelessWidget {
     vertical: 8,
   );
 
+  void _create(BuildContext context) {
+    FlutterEsp flutterEsp = FlutterEsp();
+    flutterEsp
+        .create(const CreateArguments(
+      name: "PROV_6CF1A8",
+      pop: "abcd1234",
+      secure: true,
+    ))
+        .then((value) {
+      if (value) {
+        NetworkSelectionPage.go(
+            context,
+            NetworkSelectionPageArgs(
+              deviceId: "PROV_6CF1A8",
+              proofOfPossession: "abcd1234",
+            ));
+      }
+    }).catchError((error) => print("error"));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,7 +50,13 @@ class QRCodeScanPage extends StatelessWidget {
           mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Expanded(child: Placeholder()),
+            Expanded(
+                child: Center(
+              child: ElevatedButton(
+                onPressed: () => _create(context),
+                child: const Text('Create New Device'),
+              ),
+            )),
             const SizedBox(height: 8.0),
             Padding(
               padding: _textPadding,
