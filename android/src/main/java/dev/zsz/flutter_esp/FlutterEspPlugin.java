@@ -61,10 +61,6 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler {
      * when the connection is established
      */
     private Result connectionResult = null;
-    /**
-     * When defining a device, it will do bluetooth scans looking for it.
-     */
-    private SearchForDeviceHandler searchForDeviceHandler;
 
     // Plugin lifecycle methods ---------------------------------------------------------------
     @Override
@@ -73,7 +69,6 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler {
         channel.setMethodCallHandler(this);
 
         provisionManager = ESPProvisionManager.getInstance(flutterPluginBinding.getApplicationContext());
-        searchForDeviceHandler = new SearchForDeviceHandler(provisionManager);
 
         EventBus.getDefault().register(this);
     }
@@ -127,6 +122,7 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler {
             device.setDeviceName(name);
             device.setProofOfPossession(pop);
 
+            SearchForDeviceHandler searchForDeviceHandler = new SearchForDeviceHandler(provisionManager);
             searchForDeviceHandler.startSearch(result, device);
 
         } catch (Exception e) {

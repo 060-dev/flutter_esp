@@ -91,7 +91,7 @@ public class SearchForDeviceHandler {
 
         private void handleResult() {
             if (!isDeviceFound) {
-                if (searchCnt != 3) {
+                if (searchCnt < 3) {
                     SearchDeviceTask searchDeviceTask = new SearchDeviceTask(device, result);
                     searchHandler.postDelayed(searchDeviceTask, 500);
                 } else {
