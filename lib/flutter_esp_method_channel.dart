@@ -10,55 +10,24 @@ class MethodChannelFlutterEsp extends FlutterEspPlatform {
   final methodChannel = const MethodChannel('flutter_esp');
 
   @override
-  Future<List<SearchResult>?> searchBluetoothDevices(
-      SearchArguments args) async {
-    final objects = await methodChannel.invokeMethod<List<Object?>>(
-      'searchBluetoothDevices',
+  Future<void> createBluetoothDevice(CreateArguments args) async {
+    await methodChannel.invokeMethod<void>(
+      'createBluetoothDevice',
       args.toMap(),
     );
-
-    if (objects == null) {
-      return null;
-    }
-
-    final List<SearchResult> result = [];
-
-    for (final object in objects) {
-      try {
-        result.add(SearchResult.fromMap(object as Map<Object?, Object?>));
-      } catch (e) {
-        if (kDebugMode) {
-          print(e);
-        }
-      }
-    }
-
-    return result;
   }
 
   @override
-  Future<bool> createBluetoothDevice(CreateArguments args) async {
-    return (await methodChannel.invokeMethod<void>(
-          'createBluetoothDevice',
-          args.toMap(),
-        ) as bool?) ??
-        false;
-  }
-
-  @override
-  Future<void> connectBluetoothDevice(GetNetworksArguments args) async {
+  Future<void> connectBluetoothDevice() async {
     await methodChannel.invokeMethod<void>(
       'connectBluetoothDevice',
-      args.toMap(),
     ) as String?;
   }
 
   @override
-  Future<List<GetNetworksResult>?> getAvailableNetworks(
-      GetNetworksArguments args) async {
+  Future<List<GetNetworksResult>?> getAvailableNetworks() async {
     final objects = await methodChannel.invokeMethod<List<Object?>>(
       'getAvailableNetworks',
-      args.toMap(),
     );
 
     if (objects == null) {

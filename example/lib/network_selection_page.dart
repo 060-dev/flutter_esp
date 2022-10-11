@@ -53,12 +53,7 @@ class _NetworkSelectionPageState extends State<NetworkSelectionPage> {
     List<GetNetworksResult>? networks;
 
     try {
-      networks = await _flutterEspPlugin.getAvailableNetworks(
-        GetNetworksArguments(
-          deviceId: id,
-          proofOfPossession: pop,
-        ),
-      );
+      networks = await _flutterEspPlugin.getAvailableNetworks();
     } catch (e) {
       error = 'Failed to get networks: $e';
     }
@@ -82,7 +77,6 @@ class _NetworkSelectionPageState extends State<NetworkSelectionPage> {
     final args =
         ModalRoute.of(context)!.settings.arguments as NetworkSelectionPageArgs;
     _flutterEspPlugin.provision(ProvisionArguments(
-      deviceId: args.deviceId,
       ssid: network.ssid,
       password: _password,
     ));

@@ -24,43 +24,23 @@ abstract class FlutterEspPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<List<SearchResult>?> searchBluetoothDevices(SearchArguments args) {
+  Future<void> createBluetoothDevice(CreateArguments args) {
     throw UnimplementedError(
         'searchBluetoothDevices() has not been implemented.');
   }
 
-  Future<bool> createBluetoothDevice(CreateArguments args) {
-    throw UnimplementedError(
-        'searchBluetoothDevices() has not been implemented.');
-  }
-
-  Future<void> connectBluetoothDevice(GetNetworksArguments args) {
+  Future<void> connectBluetoothDevice() {
     throw UnimplementedError(
         'connectBluetoothDevice() has not been implemented.');
   }
 
-  Future<List<GetNetworksResult>?> getAvailableNetworks(
-      GetNetworksArguments args) {
+  Future<List<GetNetworksResult>?> getAvailableNetworks() {
     throw UnimplementedError(
         'getAvailableNetworks() has not been implemented.');
   }
 
   Future<void> provision(ProvisionArguments args) {
     throw UnimplementedError('provision() has not been implemented.');
-  }
-}
-
-class SearchArguments {
-  final String prefix;
-  final bool secure;
-
-  const SearchArguments({this.prefix = 'PROV', this.secure = true});
-
-  Map<String, dynamic> toMap() {
-    return {
-      'prefix': prefix,
-      'secure': secure,
-    };
   }
 }
 
@@ -80,48 +60,14 @@ class CreateArguments {
   }
 }
 
-class SearchResult {
-  final String name;
-  final String id;
-
-  const SearchResult({required this.name, required this.id});
-
-  factory SearchResult.fromMap(Map<Object?, Object?> map) {
-    return SearchResult(
-      name: map['name'] as String,
-      id: map['id'] as String,
-    );
-  }
-}
-
-class GetNetworksArguments {
-  final String deviceId;
-  final String? proofOfPossession;
-  final bool secure;
-
-  const GetNetworksArguments(
-      {required this.deviceId, this.proofOfPossession, this.secure = true});
-
-  Map<String, dynamic> toMap() {
-    return {
-      'deviceId': deviceId,
-      'proofOfPossession': proofOfPossession,
-      'secure': secure,
-    };
-  }
-}
-
 class ProvisionArguments {
-  final String deviceId;
   final String ssid;
   final String? password;
 
-  const ProvisionArguments(
-      {required this.deviceId, required this.ssid, this.password});
+  const ProvisionArguments({required this.ssid, this.password});
 
   Map<String, dynamic> toMap() {
     return {
-      'deviceId': deviceId,
       'ssid': ssid,
       'password': password,
     };

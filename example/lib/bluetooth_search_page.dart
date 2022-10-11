@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'package:flutter/services.dart';
-import 'package:flutter_esp/flutter_esp.dart';
-import 'package:flutter_esp/flutter_esp_platform_interface.dart';
 import 'package:flutter_esp_example/network_selection_page.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -29,8 +27,6 @@ const EdgeInsets _contentPadding = EdgeInsets.symmetric(
 );
 
 class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
-  final _flutterEspPlugin = FlutterEsp();
-
   // Bluetooth search state
   _ScanState state = _ScanState.loading();
 
@@ -56,12 +52,10 @@ class _BluetoothSearchPageState extends State<BluetoothSearchPage> {
       state = _ScanState.loading();
     });
 
-    List<SearchResult> devices = [];
+    List devices = [];
     String? error;
     try {
-      devices = await _flutterEspPlugin
-              .searchBluetoothDevices(SearchArguments(prefix: _prefix)) ??
-          [];
+      devices = [];
     } on PlatformException catch (e) {
       error = 'Failed to get devices: ${e.code} | ${e.message}';
     }
@@ -211,7 +205,7 @@ class _DeviceList extends StatelessWidget {
 class _ScanState {
   final bool loading;
   final String? error;
-  final List<SearchResult> devices;
+  final List devices;
 
   _ScanState(
       {required this.loading, required this.error, required this.devices});

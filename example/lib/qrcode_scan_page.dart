@@ -30,14 +30,12 @@ class QRCodeScanPage extends StatelessWidget {
       secure: true,
     ))
         .then((value) {
-      if (value) {
-        NetworkSelectionPage.go(
-            context,
-            NetworkSelectionPageArgs(
-              deviceId: "PROV_6CF1A8",
-              proofOfPossession: "abcd1234",
-            ));
-      }
+      NetworkSelectionPage.go(
+          context,
+          NetworkSelectionPageArgs(
+            deviceId: "PROV_6CF1A8",
+            proofOfPossession: "abcd1234",
+          ));
     }).catchError((error) => print("error"));
   }
 

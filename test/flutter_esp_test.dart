@@ -9,18 +9,10 @@ class MockFlutterEspPlatform
     with MockPlatformInterfaceMixin
     implements FlutterEspPlatform {
   @override
-  Future<List<SearchResult>?> searchBluetoothDevices(
-          [SearchArguments args = const SearchArguments()]) =>
-      Future.value([const SearchResult(name: "name", id: "42")]);
+  Future<void> connectBluetoothDevice() => Future.value();
 
   @override
-  Future<void> connectBluetoothDevice(GetNetworksArguments args) =>
-      Future.value();
-
-  @override
-  Future<List<GetNetworksResult>?> getAvailableNetworks(
-          GetNetworksArguments args) =>
-      Future.value([
+  Future<List<GetNetworksResult>?> getAvailableNetworks() => Future.value([
         GetNetworksResult(
           ssid: "ssid",
           rssi: 42,
@@ -44,24 +36,13 @@ void main() {
     expect(initialPlatform, isInstanceOf<MethodChannelFlutterEsp>());
   });
 
-  test('searchBluetoothDevices', () async {
-    FlutterEsp flutterEspPlugin = FlutterEsp();
-    MockFlutterEspPlatform fakePlatform = MockFlutterEspPlatform();
-    FlutterEspPlatform.instance = fakePlatform;
-
-    expect((await flutterEspPlugin.searchBluetoothDevices())?[0].id, '42');
-  });
-
   test('getAvailableNetworks', () async {
     FlutterEsp flutterEspPlugin = FlutterEsp();
     MockFlutterEspPlatform fakePlatform = MockFlutterEspPlatform();
     FlutterEspPlatform.instance = fakePlatform;
 
     expect(
-      (await flutterEspPlugin.getAvailableNetworks(
-        const GetNetworksArguments(deviceId: "deviceId"),
-      ))?[0]
-          .ssid,
+      (await flutterEspPlugin.getAvailableNetworks())?[0].ssid,
       'ssid',
     );
   });

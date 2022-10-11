@@ -99,7 +99,7 @@ public class SearchForDeviceHandler {
                     result.error(BT_SEARCH_FAILED, errMsg, null);
                 }
             } else {
-                result.success(true);
+                result.success(null);
             }
         }
 

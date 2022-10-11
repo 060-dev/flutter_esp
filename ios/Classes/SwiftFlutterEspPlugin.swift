@@ -2,22 +2,8 @@ import Flutter
 import UIKit
 import ESPProvision
 
-// MARK: - ESPDevice extensions
-extension ESPDevice: Hashable {
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(ObjectIdentifier(self))
-    }
-}
-
-extension ESPDevice: Equatable {
-    public static func ==(lhs: ESPDevice, rhs: ESPDevice) -> Bool {
-        return ObjectIdentifier(lhs) == ObjectIdentifier(rhs)
-    }
-}
-
-//  MARK: - Plugin inplementation
 public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
-    var bleDevices: [String: ESPDevice]?
+    var espDevice: ESPDevice?
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "flutter_esp", binaryMessenger: registrar.messenger())
@@ -25,18 +11,9 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
     
+    //  MARK: - Method switch
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
-        case "searchBluetoothDevices":
-            if let args = call.arguments as? Dictionary<String, Any>,
-               let prefix = args["prefix"] as? String,
-               let secure = args["secure"] as? Bool
-            {
-                btSearch(result, prefix: prefix, secure: secure)
-            }else{
-                result(FlutterError(code: "BAD_ARGUMENTS", message: nil, details: nil))
-            }
-            break
         case "createBluetoothDevice":
             if let args = call.arguments as? Dictionary<String, Any>,
                let name = args["name"] as? String,
@@ -49,31 +26,16 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
             }
             break
         case "connectBluetoothDevice":
-            if let args = call.arguments as? Dictionary<String, Any>,
-               let id = args["deviceId"] as? String
-            {
-                btConnect(result, id: id, pop: args["proofOfPossession"] as? String)
-            }
-            else{
-                result(FlutterError(code: "BAD_ARGUMENTS", message: nil, details: nil))
-            }
+            btConnect(result)
             break
         case "getAvailableNetworks":
-            if let args = call.arguments as? Dictionary<String, Any>,
-               let id = args["deviceId"] as? String
-            {
-                btGetNetworks(result, id: id)
-            }
-            else{
-                result(FlutterError(code: "BAD_ARGUMENTS", message: nil, details: nil))
-            }
+            btGetNetworks(result)
             break
         case "provision":
             if let args = call.arguments as? Dictionary<String, Any>,
-               let id = args["deviceId"] as? String,
                let ssid = args["ssid"] as? String
             {
-                btProvision(result, id: id, ssid:ssid, passPhrase: args["password"] as? String)
+                btProvision(result, ssid:ssid, passPhrase: args["password"] as? String)
             }
             break
         default: result(FlutterMethodNotImplemented)
@@ -83,19 +45,7 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
         
     }
     
-    private func btSearch(_ result: @escaping FlutterResult, prefix: String = "PROV_", secure: Bool = true){
-        // TODO: detect if it is already connected to a device and if so, return error.
-        ESPProvisionManager.shared.searchESPDevices(devicePrefix: prefix, transport: .ble, security: secure ? .secure : .unsecure) {
-            deviceList, error in
-            if(error != nil){
-                result(FlutterError(code: "SEARCH_ERROR", message: error?.description, details: nil))
-            }else{
-                self.bleDevices = deviceList?.reduce(into: [String: ESPDevice]()) {$0[String($1.hashValue)] = $1}
-                result(deviceList?.map {["name": $0.name, "id": String($0.hashValue)]})
-            }
-        }
-    }
-    
+    //  MARK: - Create
     private func btCreate(_ result: @escaping FlutterResult, name: String, pop: String, secure: Bool = true){
         ESPProvisionManager.shared.createESPDevice(deviceName: name, transport: .ble, security: secure ? .secure : .unsecure, proofOfPossession: pop) {
             device, error in
@@ -106,19 +56,19 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
                 result(FlutterError(code: "CREATE_ERROR", message: error?.description, details: nil))
                 return
             }else{
-                self.bleDevices = [name: device!]
-                result(true)
+                self.espDevice = device
+                result(nil)
             }
         }
     }
-    
-    private func btConnect(_ result: @escaping FlutterResult, id: String, pop: String?){
-        if let device = bleDevices?[id]{
-            device.connect(delegate: ConnectionHadler(pop: pop)) {
+    //  MARK: - Connect
+    private func btConnect(_ result: @escaping FlutterResult){
+        if let device = self.espDevice{
+            device.connect() {
                 status in
                 switch status {
                 case .connected:
-                    result(id)
+                    result(nil)
                     return
                 case let .failedToConnect(error):
                     switch error {
@@ -138,18 +88,18 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
         }
         
     }
-    
-    private func btGetNetworks(_ result: @escaping FlutterResult, id: String){
-        if let device = bleDevices?[id]{
+    //  MARK: - Get Networks
+    private func btGetNetworks(_ result: @escaping FlutterResult){
+        if let device = self.espDevice{
             device.scanWifiList(){
                 networks,error in
                 result(networks?.map{["ssid": $0.ssid, "rssi": $0.rssi, "auth": $0.auth.rawValue, "bssid": $0.bssid]})
             }
         }
     }
-    
-    private func btProvision(_ result: @escaping FlutterResult, id: String, ssid: String, passPhrase: String?){
-        if let device = bleDevices?[id] {
+    //  MARK: - Provision
+    private func btProvision(_ result: @escaping FlutterResult, ssid: String, passPhrase: String?){
+        if let device = self.espDevice {
             if(passPhrase != nil){
                 device.provision(ssid: ssid, passPhrase: passPhrase!){
                     status in
