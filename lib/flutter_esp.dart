@@ -5,12 +5,15 @@ class FlutterEsp {
     return FlutterEspPlatform.instance.createBluetoothDevice(args);
   }
 
-  Future<List<GetNetworksResult>?> getAvailableNetworks() async {
-    await FlutterEspPlatform.instance.connectBluetoothDevice();
+  Future<void> connect() {
+    return FlutterEspPlatform.instance.connectBluetoothDevice();
+  }
+
+  Future<List<GetNetworksResult>?> getAvailableNetworks() {
     return FlutterEspPlatform.instance.getAvailableNetworks();
   }
 
-  Future<void> provision(ProvisionArguments args) async {
-    await FlutterEspPlatform.instance.provision(args);
+  Future<void> provision(ProvisionArguments args) {
+    return FlutterEspPlatform.instance.provision(args);
   }
 }

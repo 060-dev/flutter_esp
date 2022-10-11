@@ -95,6 +95,8 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
                 networks,error in
                 result(networks?.map{["ssid": $0.ssid, "rssi": $0.rssi, "auth": $0.auth.rawValue, "bssid": $0.bssid]})
             }
+        }else{
+            result(FlutterError(code: "DEVICE_NOT_FOUND", message: nil, details: nil))
         }
     }
     //  MARK: - Provision
