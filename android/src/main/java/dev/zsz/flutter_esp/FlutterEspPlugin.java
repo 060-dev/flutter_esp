@@ -202,6 +202,4 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler {
                 break;
         }
     }
-
-
 }

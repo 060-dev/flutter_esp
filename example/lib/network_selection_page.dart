@@ -42,8 +42,8 @@ class _NetworkSelectionPageState extends State<NetworkSelectionPage> {
     // Extract route arguments
     final args =
         ModalRoute.of(context)!.settings.arguments as NetworkSelectionPageArgs;
-    final id = args.deviceId;
-    final pop = args.proofOfPossession;
+    args.deviceId;
+    args.proofOfPossession;
 
     setState(() {
       state = _NetworksState.loading();
@@ -74,8 +74,7 @@ class _NetworkSelectionPageState extends State<NetworkSelectionPage> {
 
   _provision(GetNetworksResult network) {
     // Extract route arguments
-    final args =
-        ModalRoute.of(context)!.settings.arguments as NetworkSelectionPageArgs;
+    ModalRoute.of(context)!.settings.arguments as NetworkSelectionPageArgs;
     _flutterEspPlugin.provision(ProvisionArguments(
       ssid: network.ssid,
       password: _password,

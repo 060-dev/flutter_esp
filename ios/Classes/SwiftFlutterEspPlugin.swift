@@ -132,16 +132,3 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
     }
 }
 
-
-// MARK: - Connection delegates
-private class ConnectionHadler: ESPDeviceConnectionDelegate {
-    var pop: String?
-    
-    init(pop: String?){
-        self.pop = pop
-    }
-    public func getProofOfPossesion(forDevice: ESPDevice, completionHandler: @escaping (String) -> Void) {
-        completionHandler(pop ?? "")
-    }
-}
-

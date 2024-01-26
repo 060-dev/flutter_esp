@@ -36,7 +36,7 @@ class QRCodeScanPage extends StatelessWidget {
             deviceId: "PROV_6CF1A8",
             proofOfPossession: "abcd1234",
           ));
-    }).catchError((error) => print("error"));
+    });
   }
 
   @override
