@@ -93,13 +93,12 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
         
     }
     
-    //  MARK: - Connect
+    //  MARK: - Disconnect
     private func btDisconnect(_ result: @escaping FlutterResult) {
         if let device = self.espDevice {
-            device.disconnect { [weak self] in
-                self?.espDevice = nil
-                result(nil)
-            }
+            device.disconnect()
+            self.espDevice = nil
+            result(nil)
         } else {
             result(nil)
         }
