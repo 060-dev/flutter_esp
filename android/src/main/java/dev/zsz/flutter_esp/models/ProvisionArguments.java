@@ -6,7 +6,7 @@ public class ProvisionArguments {
     public final String ssid;
     public final String password;
 
-    ProvisionArguments( String ssid, String password){
+    ProvisionArguments(String ssid, String password){
         this.ssid = ssid;
         this.password = password;
     }

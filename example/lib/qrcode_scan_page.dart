@@ -24,18 +24,21 @@ class QRCodeScanPage extends StatelessWidget {
   void _create(BuildContext context) {
     FlutterEsp flutterEsp = FlutterEsp();
     flutterEsp
-        .create(const CreateArguments(
-      name: "PROV_6CF1A8",
-      pop: "abcd1234",
-      secure: true,
-    ))
+        .create(
+      const CreateArguments(
+        name: "PROV_6CF1A8",
+        pop: "abcd1234",
+        secure: true,
+      ),
+    )
         .then((value) {
       NetworkSelectionPage.go(
-          context,
-          NetworkSelectionPageArgs(
-            deviceId: "PROV_6CF1A8",
-            proofOfPossession: "abcd1234",
-          ));
+        context,
+        NetworkSelectionPageArgs(
+          deviceId: "PROV_6CF1A8",
+          proofOfPossession: "abcd1234",
+        ),
+      );
     });
   }
 

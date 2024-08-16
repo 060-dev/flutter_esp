@@ -28,6 +28,9 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
         case "connectBluetoothDevice":
             btConnect(result)
             break
+        case "disconnectBluetoothDevice":
+            btDisconnect(result)
+            break
         case "getAvailableNetworks":
             btGetNetworks(result)
             break
@@ -61,8 +64,9 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
             }
         }
     }
+
     //  MARK: - Connect
-    private func btConnect(_ result: @escaping FlutterResult){
+    private func btConnect(_ result: @escaping FlutterResult) {
         if let device = self.espDevice{
             device.connect() {
                 status in
@@ -88,6 +92,19 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
         }
         
     }
+    
+    //  MARK: - Connect
+    private func btDisconnect(_ result: @escaping FlutterResult) {
+        if let device = self.espDevice {
+            device.disconnect { [weak self] in
+                self?.espDevice = nil
+                result(nil)
+            }
+        } else {
+            result(FlutterError(code: "DEVICE_NOT_FOUND", message: "No device connected", details: nil))
+        }
+    }
+
     //  MARK: - Get Networks
     private func btGetNetworks(_ result: @escaping FlutterResult){
         if let device = self.espDevice{

@@ -1,31 +1,31 @@
 name: flutter_esp_example
 description: Demonstrates how to use the flutter_esp plugin.
 
-publish_to: "none" # Remove this line if you wish to publish to pub.dev
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 0.0.1
 
 environment:
-  sdk: ">=2.18.0 <3.0.0"
+ sdk: '>=2.18.0 <3.0.0'
 
 dependencies:
-  flutter:
-    sdk: flutter
+ flutter:
+  sdk: flutter
 
-  flutter_esp:
-    # When depending on this package from a real application you should use:
-    #   flutter_esp: ^x.y.z
-    # See https://dart.dev/tools/pub/dependencies#version-constraints
-    # The example app is bundled with the plugin so we use a path dependency on
-    # the parent directory to use the current plugin's version.
-    path: ../
+ flutter_esp:
+  # When depending on this package from a real application you should use:
+  #   flutter_esp: ^x.y.z
+  # See https://dart.dev/tools/pub/dependencies#version-constraints
+  # The example app is bundled with the plugin so we use a path dependency on
+  # the parent directory to use the current plugin's version.
+  path: ../
 
-  permission_handler: ^10.0.0
+ permission_handler: ^10.0.0
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
+ flutter_test:
+  sdk: flutter
 
-  flutter_lints: ^2.0.0
+ flutter_lints: ^2.0.0
 
 flutter:
-  uses-material-design: true
+ uses-material-design: true

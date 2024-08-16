@@ -34,6 +34,11 @@ abstract class FlutterEspPlatform extends PlatformInterface {
         'connectBluetoothDevice() has not been implemented.');
   }
 
+  Future<void> disconnectBluetoothDevice() {
+    throw UnimplementedError(
+        'disconnectBluetoothDevice() has not been implemented.');
+  }
+
   Future<List<GetNetworksResult>?> getAvailableNetworks() {
     throw UnimplementedError(
         'getAvailableNetworks() has not been implemented.');

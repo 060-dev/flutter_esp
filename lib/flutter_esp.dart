@@ -9,6 +9,10 @@ class FlutterEsp {
     return FlutterEspPlatform.instance.connectBluetoothDevice();
   }
 
+  Future<void> disconnect() {
+    return FlutterEspPlatform.instance.disconnectBluetoothDevice();
+  }
+
   Future<List<GetNetworksResult>?> getAvailableNetworks() {
     return FlutterEspPlatform.instance.getAvailableNetworks();
   }

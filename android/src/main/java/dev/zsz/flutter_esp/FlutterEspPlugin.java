@@ -95,6 +95,9 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler {
             case "connectBluetoothDevice":
                 btConnect(result);
                 break;
+            case "disconnectBluetoothDevice":
+                btDisconnect(result);
+                break;
             case "getAvailableNetworks":
                 getAvailableNetworks(result);
                 break;
@@ -138,6 +141,20 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler {
             device.connectBLEDevice(device.getBluetoothDevice(), device.getPrimaryServiceUuid());
         } else {
             result.error(NO_DEVICE_SELECTED, null, null);
+        }
+    }
+
+    private void btDisconnect(Result result) {
+        final ESPDevice device = provisionManager.getEspDevice();
+        if (device != null) {
+            try {
+                device.disconnectDevice();
+                result.success(null);
+            } catch (Exception e) {
+                result.error("DISCONNECT_FAILED", "Failed to disconnect device", e.getMessage());
+            }
+        } else {
+            result.error(NO_DEVICE_SELECTED, "No device selected", null);
         }
     }
 

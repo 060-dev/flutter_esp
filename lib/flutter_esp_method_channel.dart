@@ -25,6 +25,13 @@ class MethodChannelFlutterEsp extends FlutterEspPlatform {
   }
 
   @override
+  Future<void> disconnectBluetoothDevice() async {
+    await methodChannel.invokeMethod<void>(
+      'disconnectBluetoothDevice',
+    ) as String?;
+  }
+
+  @override
   Future<List<GetNetworksResult>?> getAvailableNetworks() async {
     final objects = await methodChannel.invokeMethod<List<Object?>>(
       'getAvailableNetworks',
