@@ -101,7 +101,7 @@ public class SwiftFlutterEspPlugin: NSObject, FlutterPlugin {
                 result(nil)
             }
         } else {
-            result(FlutterError(code: "DEVICE_NOT_FOUND", message: "No device connected", details: nil))
+            result(nil)
         }
     }
 

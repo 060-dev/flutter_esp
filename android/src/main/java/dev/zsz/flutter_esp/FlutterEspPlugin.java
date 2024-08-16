@@ -154,7 +154,7 @@ public class FlutterEspPlugin implements FlutterPlugin, MethodCallHandler {
                 result.error("DISCONNECT_FAILED", "Failed to disconnect device", e.getMessage());
             }
         } else {
-            result.error(NO_DEVICE_SELECTED, "No device selected", null);
+            result.success(null);
         }
     }
 
